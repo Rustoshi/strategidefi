@@ -1,21 +1,58 @@
 <%- include('partials/head') %>
-<div class="topbar"><h1>Users</h1></div>
-<table>
-  <thead><tr><th>ID</th><th>Email</th><th>Nickname</th><th>Invite</th><th>USD</th><th>KYC</th><th>Admin</th><th>Created</th></tr></thead>
-  <tbody>
-    <% users.forEach(function(u){ %>
-      <tr>
-        <td><%= u.id %></td>
-        <td><%= u.email %></td>
-        <td><%= u.nickname || '—' %></td>
-        <td class="muted"><%= u.invite_code || '—' %></td>
-        <td><%= (u.USD || 0).toFixed ? u.USD.toFixed(2) : u.USD %></td>
-        <td><span class="tag <%= u.auth_status===2?'on':'off' %>"><%= ['none','pending','verified'][u.auth_status]||'none' %></span></td>
-        <td><%= u.is_admin ? '✓' : '' %></td>
-        <td class="muted"><%= u.createdAt ? u.createdAt.toISOString().slice(0,10) : '' %></td>
-      </tr>
-    <% }) %>
-  </tbody>
-</table>
-<% if (!users.length) { %><p class="muted" style="margin-top:16px;">No users yet.</p><% } %>
+
+<% if (flash) { %><div class="flash ok"><%= flash %></div><% } %>
+<% if (err) { %><div class="flash err"><%= err %></div><% } %>
+
+<form class="bar" method="get" action="/admin/users">
+  <div class="grow"><input name="q" value="<%= q %>" placeholder="Search email, nickname, invite code, wallet or ID…" /></div>
+  <select name="status" style="width:auto;min-width:140px">
+    <option value="">All statuses</option>
+    <option value="active" <%= status==='active'?'selected':'' %>>Active</option>
+    <option value="disabled" <%= status==='disabled'?'selected':'' %>>Disabled</option>
+  </select>
+  <button class="btn" type="submit">Search</button>
+  <% if (q || status) { %><a class="btn ghost" href="/admin/users">Clear</a><% } %>
+  <span class="muted" style="margin-left:auto"><%= total %> user<%= total===1?'':'s' %></span>
+</form>
+
+<% if (!rows.length) { %>
+  <div class="panel"><div class="empty"><div class="big">◍</div>No users match that search.</div></div>
+<% } else { %>
+  <div class="tw">
+    <table>
+      <thead>
+        <tr><th>ID</th><th>Email</th><th>Funds</th><th>Total assets</th><th>Wallet</th><th>KYC</th><th>Status</th><th>Joined</th><th></th></tr>
+      </thead>
+      <tbody>
+        <% rows.forEach(function(r){ var u=r.u; %>
+          <tr>
+            <td class="mono">#<%= u.id %></td>
+            <td>
+              <%= u.email %>
+              <% if (u.is_admin) { %> <span class="tag warn">Admin</span><% } %>
+              <% if (u.nickname) { %><div class="muted" style="font-size:12px"><%= u.nickname %></div><% } %>
+            </td>
+            <td class="mono"><%= r.funds.toLocaleString() %></td>
+            <td class="mono"><%= r.total.toLocaleString() %></td>
+            <td><% if (u.wallet_connected) { %><span class="tag on">Linked</span><% } else { %><span class="muted">—</span><% } %></td>
+            <td><span class="tag <%= u.auth_status===2?'on':(u.auth_status===1?'warn':'off') %>"><%= ['None','Pending','Verified'][u.auth_status]||'None' %></span></td>
+            <td><% if (u.status === 1) { %><span class="tag on">Active</span><% } else { %><span class="tag off">Disabled</span><% } %></td>
+            <td class="muted"><%= u.createdAt ? u.createdAt.toISOString().slice(0,10) : '—' %></td>
+            <td><a class="btn ghost sm" href="/admin/users/<%= u.id %>">Manage</a></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if (pages > 1) { %>
+    <div class="pager">
+      <% for (var p = 1; p <= pages; p++) { %>
+        <% if (p === page) { %><span class="cur"><%= p %></span>
+        <% } else { %><a href="/admin/users?page=<%= p %>&q=<%= encodeURIComponent(q) %>&status=<%= status %>"><%= p %></a><% } %>
+      <% } %>
+    </div>
+  <% } %>
+<% } %>
+
 <%- include('partials/foot') %>

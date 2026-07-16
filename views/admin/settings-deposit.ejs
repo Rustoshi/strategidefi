@@ -1,0 +1,75 @@
+<%- include('partials/head') %>
+
+<% if (flash) { %><div class="flash ok"><%= flash %></div><% } %>
+
+<div class="note">
+  These are the addresses users are shown on the Deposit page. The defaults are <b>placeholder / burn addresses</b>
+  (<span class="mono">0x…dEaD</span>, <span class="mono">1BitcoinEater…</span>) so nothing can be collected until you set your own.
+  Deposits are never credited automatically — you approve them under <a href="/admin/deposits">Deposits</a>.
+</div>
+
+<div class="panel">
+  <h2>Crypto channels</h2>
+  <form method="post" action="/admin/settings/deposit" id="depForm">
+    <div class="tw">
+      <table>
+        <thead>
+          <tr><th style="min-width:140px">Label</th><th style="min-width:90px">Coin</th><th style="min-width:280px">Deposit address</th><th style="min-width:100px">Min</th><th style="min-width:80px">Decimals</th><th style="min-width:240px">Remark</th><th></th></tr>
+        </thead>
+        <tbody id="rows">
+          <% currencies.forEach(function(c){ %>
+            <tr>
+              <td><input name="coin_type[]" value="<%= c.coin_type || c.name || '' %>" placeholder="USDT(ERC20)" /></td>
+              <td><input name="coin_name[]" value="<%= c.coin_name || '' %>" placeholder="USDT" /></td>
+              <td><input name="recharge_address[]" value="<%= c.recharge_address || '' %>" class="mono" /></td>
+              <td><input name="min_recharge[]" type="number" step="any" value="<%= c.min_recharge || 0 %>" /></td>
+              <td><input name="price_decimals[]" type="number" value="<%= c.price_decimals || 2 %>" /></td>
+              <td><input name="recharge_remark[]" value="<%= c.recharge_remark || '' %>" /></td>
+              <td><button class="btn ghost sm" type="button" onclick="this.closest('tr').remove()">✕</button></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <div class="actions" style="margin-top:14px">
+      <button class="btn ghost sm" type="button" id="addRow">+ Add channel</button>
+      <button class="btn" type="submit">Save channels</button>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:10px">Clearing a row's label removes it on save. The label is the chip shown on the Deposit page.</div>
+  </form>
+</div>
+
+<div class="panel">
+  <h2>Bank card deposit</h2>
+  <form method="post" action="/admin/settings/deposit/bank">
+    <div class="row">
+      <div><label>Bank name</label><input name="bank_name" value="<%= bank.bank_name || '' %>" /></div>
+      <div><label>Account name</label><input name="name" value="<%= bank.name || '' %>" /></div>
+    </div>
+    <div class="row">
+      <div><label>Bank number</label><input name="bank_card" value="<%= bank.bank_card || '' %>" /></div>
+      <div><label>FPS</label><input name="zhuanshukuai" value="<%= bank.zhuanshukuai || '' %>" /></div>
+      <div><label>Fee rate (0.01 = 1%)</label><input name="bank_recharge_fee_rate" type="number" step="any" value="<%= bank.bank_recharge_fee_rate || 0 %>" /></div>
+    </div>
+    <label>Remark</label>
+    <textarea name="recharge_remark"><%= bank.recharge_remark || '' %></textarea>
+    <div style="margin-top:14px"><button class="btn" type="submit">Save bank details</button></div>
+  </form>
+</div>
+
+<script>
+  document.getElementById('addRow').addEventListener('click', function () {
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td><input name="coin_type[]" placeholder="USDT(ERC20)" /></td>' +
+      '<td><input name="coin_name[]" placeholder="USDT" /></td>' +
+      '<td><input name="recharge_address[]" class="mono" /></td>' +
+      '<td><input name="min_recharge[]" type="number" step="any" value="10" /></td>' +
+      '<td><input name="price_decimals[]" type="number" value="2" /></td>' +
+      '<td><input name="recharge_remark[]" /></td>' +
+      '<td><button class="btn ghost sm" type="button">✕</button></td>';
+    tr.querySelector('button').addEventListener('click', function () { tr.remove(); });
+    document.getElementById('rows').appendChild(tr);
+  });
+</script>
+
+<%- include('partials/foot') %>

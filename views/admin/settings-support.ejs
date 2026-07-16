@@ -1,0 +1,61 @@
+<%- include('partials/head') %>
+
+<% if (flash) { %><div class="flash ok"><%= flash %></div><% } %>
+
+<div class="note">
+  The app's Service screen loads this link in a frame, appending <span class="mono">&amp;user_id=…</span>.
+  Leave it blank to use the built-in <a href="/support" target="_blank">/support</a> page (recommended — it always renders).
+  If you point it at an external desk, that site <b>must allow embedding</b> — Telegram/WhatsApp links send
+  <span class="mono">X-Frame-Options</span> and will show a blank frame.
+</div>
+
+<div class="panel">
+  <h2>Service link</h2>
+  <form method="post" action="/admin/settings/support">
+    <label>Customer-service URL (blank = built-in support page)</label>
+    <input name="kefu_link" value="<%= kefu_link || '' %>" placeholder="/support?src=app" class="mono" />
+
+    <h2 style="margin-top:22px">Built-in support page</h2>
+    <label>Availability line</label>
+    <input name="hours" value="<%= cfg.hours || '' %>" placeholder="Our team is available 24/7…" />
+    <label>Safety note</label>
+    <textarea name="note" placeholder="We will never ask for your password…"><%= cfg.note || '' %></textarea>
+
+    <label style="margin-top:18px">Contact channels</label>
+    <div class="tw">
+      <table>
+        <thead><tr><th style="width:70px">Icon</th><th style="min-width:120px">Label</th><th style="min-width:200px">Value</th><th style="min-width:220px">Link (optional)</th><th></th></tr></thead>
+        <tbody id="rows">
+          <% contacts.forEach(function(c){ %>
+            <tr>
+              <td><input name="icon[]" value="<%= c.icon || '' %>" /></td>
+              <td><input name="label[]" value="<%= c.label || '' %>" /></td>
+              <td><input name="value[]" value="<%= c.value || '' %>" /></td>
+              <td><input name="href[]" value="<%= c.href || '' %>" class="mono" /></td>
+              <td><button class="btn ghost sm" type="button" onclick="this.closest('tr').remove()">✕</button></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <div class="actions" style="margin-top:14px">
+      <button class="btn ghost sm" type="button" id="addRow">+ Add channel</button>
+      <button class="btn" type="submit">Save support settings</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  document.getElementById('addRow').addEventListener('click', function () {
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td><input name="icon[]" value="✉️" /></td>' +
+      '<td><input name="label[]" placeholder="Email" /></td>' +
+      '<td><input name="value[]" placeholder="support@…" /></td>' +
+      '<td><input name="href[]" class="mono" placeholder="mailto:support@…" /></td>' +
+      '<td><button class="btn ghost sm" type="button">✕</button></td>';
+    tr.querySelector('button').addEventListener('click', function () { tr.remove(); });
+    document.getElementById('rows').appendChild(tr);
+  });
+</script>
+
+<%- include('partials/foot') %>

@@ -47,6 +47,38 @@
   }
   .ref{margin-top:14px;text-align:center;font-size:11.5px;color:#6E7688}
   .ref b{color:var(--gold);font-weight:600}
+
+  /* ---- live chat ---- */
+  .chat{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-top:16px;overflow:hidden}
+  .chat-head{
+    display:flex;align-items:center;gap:8px;padding:11px 14px;font-size:13px;font-weight:600;
+    border-bottom:1px solid var(--line);background:rgba(255,255,255,.02);
+  }
+  .dotlive{width:7px;height:7px;border-radius:50%;background:#2ECC71;box-shadow:0 0 0 3px rgba(46,204,113,.18);flex:0 0 auto}
+  .chat-sub{margin-left:auto;font-size:11px;font-weight:400;color:var(--muted);text-align:right}
+  .thread{
+    display:flex;flex-direction:column;gap:8px;padding:12px;
+    min-height:140px;max-height:300px;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  }
+  .chat-empty{color:var(--muted);font-size:12.5px;text-align:center;margin:auto;padding:14px;line-height:1.6}
+  .msg{
+    max-width:82%;padding:8px 11px;border-radius:12px;font-size:13px;line-height:1.5;
+    word-break:break-word;white-space:pre-wrap;
+  }
+  .msg .at{display:block;font-size:10px;margin-top:4px;opacity:.6}
+  .msg.theirs{align-self:flex-start;background:#3A3F4E;border-bottom-left-radius:4px}
+  .msg.mine{align-self:flex-end;background:rgba(240,201,71,.16);color:#F6E3A1;border-bottom-right-radius:4px}
+  .composer{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line);align-items:flex-end}
+  .composer textarea{
+    flex:1;resize:none;background:var(--bg-2);border:1px solid var(--line);color:var(--text);
+    border-radius:10px;padding:10px 11px;font:inherit;font-size:13px;line-height:1.4;max-height:96px;
+  }
+  .composer textarea:focus{outline:none;border-color:var(--gold)}
+  .composer button{
+    background:var(--gold);color:#1a1300;border:0;border-radius:10px;padding:0 15px;height:40px;
+    font:inherit;font-weight:700;cursor:pointer;flex:0 0 auto;
+  }
+  .composer button:disabled{opacity:.55;cursor:not-allowed}
 </style>
 </head>
 <body>
@@ -69,10 +101,117 @@
     <% }) %>
   </div>
 
+  <!-- Live chat with support. Auth: this page is same-origin with the SPA, so it reads the
+       app's own JWT out of localStorage. The `user_id` in the URL is NOT trusted. -->
+  <div class="chat" id="chat" hidden>
+    <div class="chat-head">
+      <span class="dotlive"></span> Live chat
+      <span class="chat-sub" id="chatSub">Connecting…</span>
+    </div>
+    <div class="thread" id="thread"></div>
+    <form class="composer" id="composer">
+      <textarea id="body" rows="1" placeholder="Type a message…" maxlength="2000"></textarea>
+      <button type="submit" id="send">Send</button>
+    </form>
+  </div>
+
   <div class="note"><%= note %></div>
 
   <% if (userId) { %>
     <div class="ref">Your reference ID: <b>#<%= userId %></b> — quote this when contacting support.</div>
   <% } %>
+
+<script>
+(function () {
+  var chat = document.getElementById('chat'), thread = document.getElementById('thread'),
+      form = document.getElementById('composer'), body = document.getElementById('body'),
+      sub = document.getElementById('chatSub'), send = document.getElementById('send');
+
+  // The SPA caches its JWT under "token" as {key,value,...}. Same origin => same localStorage.
+  function token() {
+    try {
+      var raw = localStorage.getItem('token');
+      if (raw) { var o = JSON.parse(raw); if (o && o.value) return o.value; if (typeof o === 'string') return o; }
+      for (var i = 0; i < localStorage.length; i++) {
+        var v = JSON.parse(localStorage.getItem(localStorage.key(i)) || 'null');
+        if (v && v.key === 'token' && v.value) return v.value;
+      }
+    } catch (e) {}
+    return '';
+  }
+  var TOKEN = token();
+  if (!TOKEN) return; // signed out — contact cards above still work
+
+  chat.hidden = false;
+  var lastId = 0, seen = {};
+
+  function api(path, data) {
+    return fetch('/api/support/' + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+      body: JSON.stringify(data || {}),
+    }).then(function (r) { return r.json(); });
+  }
+  function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+  function when(iso) {
+    var d = new Date(iso), p = function (n) { return String(n).padStart(2, '0'); };
+    return p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+  function add(m) {
+    if (seen[m.id]) return;
+    seen[m.id] = 1;
+    var el = document.createElement('div');
+    el.className = 'msg ' + (m.mine ? 'mine' : 'theirs');
+    el.innerHTML = esc(m.body) + '<span class="at">' + (m.mine ? 'You' : 'Support') + ' · ' + when(m.created_at) + '</span>';
+    thread.appendChild(el);
+    thread.scrollTop = thread.scrollHeight;
+  }
+  function empty() {
+    if (thread.children.length) return;
+    var el = document.createElement('div');
+    el.className = 'chat-empty';
+    el.id = 'chatEmpty';
+    el.textContent = 'No messages yet — send us a message and we’ll reply here.';
+    thread.appendChild(el);
+  }
+  function poll() {
+    api('messages', { since: lastId }).then(function (j) {
+      if (!j || j.status_code !== 200) { sub.textContent = ''; return; }
+      var list = (j.data && j.data.list) || [];
+      if (list.length) {
+        var e = document.getElementById('chatEmpty');
+        if (e) e.remove();
+        list.forEach(add);
+        lastId = j.data.last_id || lastId;
+      }
+      sub.textContent = 'We usually reply in a few minutes';
+      empty();
+    }).catch(function () {});
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var text = body.value.trim();
+    if (!text) return;
+    send.disabled = true;
+    api('send', { body: text }).then(function (j) {
+      if (j && j.status_code === 200) { body.value = ''; body.style.height = 'auto'; poll(); }
+      else if (j) { sub.textContent = j.message || 'Could not send'; }
+    }).catch(function () { sub.textContent = 'Network error — try again'; })
+      .then(function () { send.disabled = false; body.focus(); });
+  });
+
+  body.addEventListener('input', function () {
+    body.style.height = 'auto';
+    body.style.height = Math.min(body.scrollHeight, 96) + 'px';
+  });
+  body.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); }
+  });
+
+  poll();
+  setInterval(poll, 5000); // simple polling — good enough for support volume
+})();
+</script>
 </body>
 </html>

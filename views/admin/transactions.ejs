@@ -1,0 +1,45 @@
+<%- include('partials/head') %>
+
+<form class="bar" method="get" action="/admin/transactions">
+  <select name="type" style="width:auto;min-width:150px">
+    <option value="">All types</option>
+    <% types.forEach(function(t){ %><option value="<%= t %>" <%= type===t?'selected':'' %>><%= t %></option><% }) %>
+  </select>
+  <input name="uid" value="<%= uid %>" placeholder="User ID" style="width:auto;min-width:120px" />
+  <button class="btn" type="submit">Filter</button>
+  <% if (type || uid) { %><a class="btn ghost" href="/admin/transactions">Clear</a><% } %>
+  <span class="muted" style="margin-left:auto"><%= total %> entr<%= total===1?'y':'ies' %></span>
+</form>
+
+<% if (!rows.length) { %>
+  <div class="panel"><div class="empty"><div class="big">≡</div>No transactions match.</div></div>
+<% } else { %>
+  <div class="tw">
+    <table>
+      <thead><tr><th>When</th><th>User</th><th>Type</th><th>Amount</th><th>Balance after</th><th>Remark</th></tr></thead>
+      <tbody>
+        <% rows.forEach(function(r){ %>
+          <tr>
+            <td class="muted"><%= new Date(r.create_time*1000).toISOString().replace('T',' ').slice(0,19) %></td>
+            <td><a href="/admin/users/<%= r.user_id %>" style="color:var(--gold)"><%= emails[r.user_id] || ('#'+r.user_id) %></a></td>
+            <td><span class="tag info"><%= r.type_text %></span></td>
+            <td class="mono <%= r.amount>=0?'pos':'neg' %>"><%= r.amount>=0?'+':'' %><%= r.amount %> <%= r.coin_name %></td>
+            <td class="mono"><%= r.balance %></td>
+            <td class="wrap-cell muted"><%= r.remark %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if (pages > 1) { %>
+    <div class="pager">
+      <% for (var p=1; p<=pages; p++) { %>
+        <% if (p===page) { %><span class="cur"><%= p %></span>
+        <% } else { %><a href="/admin/transactions?page=<%= p %>&type=<%= type %>&uid=<%= uid %>"><%= p %></a><% } %>
+      <% } %>
+    </div>
+  <% } %>
+<% } %>
+
+<%- include('partials/foot') %>

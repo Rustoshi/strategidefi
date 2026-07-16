@@ -23,7 +23,7 @@ schema.methods.toApi = function toApi() {
   return {
     id: this.id,
     type: this.type,
-    type_text: { yield: 'Earnings', stake: 'Stake', unstake: 'Unstake', withdraw: 'Withdrawal', refund: 'Refund', transfer: 'Transfer', loan: 'Loan', repay: 'Repayment' }[this.type] || this.type,
+    type_text: { yield: 'Earnings', stake: 'Stake', unstake: 'Unstake', withdraw: 'Withdrawal', refund: 'Refund', transfer: 'Transfer', loan: 'Loan', repay: 'Repayment', adjust: 'Adjustment', deposit: 'Deposit' }[this.type] || this.type,
     amount: Number((this.amount || 0).toFixed(2)),
     balance: Number((this.balance_after || 0).toFixed(2)),
     coin_name: this.coin_name,

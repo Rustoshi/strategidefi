@@ -1,4 +1,27 @@
   </main>
 </div>
+<script>
+  // Off-canvas sidebar (mobile only — it's always visible >=1024px).
+  (function () {
+    var side = document.getElementById('side'),
+        bd = document.getElementById('backdrop'),
+        burger = document.getElementById('burger');
+    function close() { side.classList.remove('open'); bd.classList.remove('on'); }
+    if (burger) burger.addEventListener('click', function () {
+      side.classList.toggle('open'); bd.classList.toggle('on');
+    });
+    if (bd) bd.addEventListener('click', close);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+    // Any nav tap closes the drawer.
+    side.querySelectorAll('.nav a').forEach(function (a) { a.addEventListener('click', close); });
+  })();
+
+  // Confirm destructive actions: <form data-confirm="Delete this?">
+  document.querySelectorAll('form[data-confirm]').forEach(function (f) {
+    f.addEventListener('submit', function (e) {
+      if (!window.confirm(f.getAttribute('data-confirm'))) e.preventDefault();
+    });
+  });
+</script>
 </body>
 </html>

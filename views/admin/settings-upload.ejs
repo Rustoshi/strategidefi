@@ -1,0 +1,36 @@
+<%- include('partials/head') %>
+
+<% if (flash) { %><div class="flash ok"><%= flash %></div><% } %>
+
+<div class="note">
+  Payment vouchers and KYC images upload straight from the browser to Cloudinary using an
+  <b>unsigned upload preset</b> — no bytes pass through this server. The cloud name and preset are public by design.
+  Values here override the <span class="mono">CLOUDINARY_*</span> environment variables.
+</div>
+
+<div class="panel">
+  <h2>Cloudinary</h2>
+  <form method="post" action="/admin/settings/upload">
+    <div class="row">
+      <div>
+        <label>Cloud name</label>
+        <input name="cloud_name" value="<%= cfg.cloud_name || '' %>" placeholder="<%= env.cloud || 'e.g. di99jjicm' %>" />
+      </div>
+      <div>
+        <label>Unsigned upload preset</label>
+        <input name="upload_preset" value="<%= cfg.upload_preset || '' %>" placeholder="<%= env.preset || 'e.g. deposit_proofs' %>" />
+      </div>
+      <div>
+        <label>Folder</label>
+        <input name="folder" value="<%= cfg.folder || '' %>" placeholder="strategidefi/deposits" />
+      </div>
+    </div>
+    <div style="margin-top:14px"><button class="btn" type="submit">Save</button></div>
+  </form>
+  <div class="muted" style="font-size:12px;margin-top:12px">
+    From environment: cloud <b><%= env.cloud || '(unset)' %></b> · preset <b><%= env.preset || '(unset)' %></b>.
+    Leave the fields blank to use those. The preset must be <b>Unsigned</b> or browser uploads are rejected.
+  </div>
+</div>
+
+<%- include('partials/foot') %>

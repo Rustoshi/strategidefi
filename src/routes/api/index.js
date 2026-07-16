@@ -8,6 +8,7 @@ router.use('/coincoin', require('./coincoin'));
 router.use('/option', require('./option'));
 router.use('/pledge', require('./pledge'));
 router.use('/contract', require('./contract'));
+router.use('/support', require('./support'));
 
 // Any /api/* route not implemented yet degrades quietly with a success-shaped envelope
 // so the SPA never surfaces a developer error toast to end users. The SPA only shows a

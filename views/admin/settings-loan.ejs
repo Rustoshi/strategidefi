@@ -1,0 +1,19 @@
+<%- include('partials/head') %>
+
+<% if (flash) { %><div class="flash ok"><%= flash %></div><% } %>
+
+<div class="panel">
+  <h2>Default credit limit</h2>
+  <div class="note">
+    Applies to every user who has no personal limit set. A per-user limit on a
+    <a href="/admin/users">user's page</a> overrides this. <b>0 means nobody can borrow.</b>
+    Borrowing credits the user's Funds Account and is tracked as outstanding debt — no interest is charged.
+  </div>
+  <form method="post" action="/admin/settings/loan">
+    <label>Default credit limit (USDT)</label>
+    <input name="quota" type="number" step="0.01" min="0" value="<%= quota || 0 %>" style="max-width:240px" />
+    <div style="margin-top:12px"><button class="btn" type="submit">Save</button></div>
+  </form>
+</div>
+
+<%- include('partials/foot') %>

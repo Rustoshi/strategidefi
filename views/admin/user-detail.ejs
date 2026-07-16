@@ -1,0 +1,220 @@
+<%- include('partials/head') %>
+
+<div class="crumb"><a href="/admin/users">← Users</a> / #<%= user.id %></div>
+<% if (flash) { %><div class="flash ok"><%= flash %></div><% } %>
+<% if (err) { %><div class="flash err"><%= err %></div><% } %>
+
+<div class="cards">
+  <div class="card"><div class="n"><%= total.toLocaleString() %></div><div class="l">Total assets (USDT)</div></div>
+  <div class="card"><div class="n"><%= acc.funds.toLocaleString() %></div><div class="l">Funds</div></div>
+  <div class="card"><div class="n"><%= acc.contract.toLocaleString() %></div><div class="l">Contract</div></div>
+  <div class="card"><div class="n"><%= acc.fiat.toLocaleString() %></div><div class="l">Fiat</div></div>
+  <div class="card"><div class="n"><%= owed.toLocaleString() %></div><div class="l">Loan outstanding</div></div>
+</div>
+
+<!-- ---------- Profile ---------- -->
+<div class="panel">
+  <h2>Profile</h2>
+  <div class="tw">
+    <table>
+      <tbody>
+        <tr><th style="width:170px">Email</th><td><%= user.email %></td></tr>
+        <tr><th>Nickname</th><td><%= user.nickname || '—' %></td></tr>
+        <tr><th>Invite code</th><td class="mono"><%= user.invite_code || '—' %></td></tr>
+        <tr><th>Wallet</th><td class="mono wrap-cell"><%= user.wallet_address || '—' %> <% if (user.wallet_connected) { %><span class="tag on">Linked</span><% } %></td></tr>
+        <tr><th>KYC</th><td><span class="tag <%= user.auth_status===2?'on':(user.auth_status===1?'warn':'off') %>"><%= ['None','Pending','Verified'][user.auth_status]||'None' %></span></td></tr>
+        <tr><th>Status</th><td><% if (user.status===1) { %><span class="tag on">Active</span><% } else { %><span class="tag off">Disabled</span><% } %></td></tr>
+        <tr><th>Admin</th><td><% if (user.is_admin) { %><span class="tag warn">Yes</span><% } else { %><span class="muted">No</span><% } %></td></tr>
+        <tr><th>Joined</th><td class="muted"><%= user.createdAt ? user.createdAt.toISOString().replace('T',' ').slice(0,19) : '—' %></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="actions" style="margin-top:14px">
+    <form class="inline" method="post" action="/admin/users/<%= user.id %>/status"
+          data-confirm="<%= user.status===1 ? 'Disable this account? They will not be able to sign in.' : 'Re-enable this account?' %>">
+      <button class="btn <%= user.status===1?'danger':'' %> sm" type="submit"><%= user.status===1 ? 'Disable account' : 'Enable account' %></button>
+    </form>
+    <form class="inline" method="post" action="/admin/users/<%= user.id %>/admin"
+          data-confirm="<%= user.is_admin ? 'Revoke admin access?' : 'Grant FULL admin access to this user?' %>">
+      <button class="btn ghost sm" type="submit"><%= user.is_admin ? 'Revoke admin' : 'Grant admin' %></button>
+    </form>
+  </div>
+</div>
+
+<div class="row">
+  <!-- ---------- Login password ---------- -->
+  <div class="panel">
+    <h2>Reset login password</h2>
+    <form method="post" action="/admin/users/<%= user.id %>/password" data-confirm="Reset this user's login password?">
+      <label>New password (min 6 characters)</label>
+      <input name="password" type="text" minlength="6" required placeholder="e.g. Temp1234" />
+      <div style="margin-top:12px"><button class="btn sm" type="submit">Reset password</button></div>
+    </form>
+  </div>
+
+  <!-- ---------- Withdrawal password ---------- -->
+  <div class="panel">
+    <h2>Withdrawal password <span class="sub">· required to withdraw</span></h2>
+    <form method="post" action="/admin/users/<%= user.id %>/withdraw-password">
+      <label>Password for this user (leave blank to fall back to the global one)</label>
+      <input name="withdraw_password" type="text" value="<%= user.withdraw_password || '' %>" placeholder="Not set — global password applies" />
+      <div style="margin-top:12px"><button class="btn sm" type="submit">Save</button></div>
+    </form>
+    <div class="muted" style="font-size:12px;margin-top:10px">Shown in plain text so you can tell the user what it is.</div>
+  </div>
+</div>
+
+<div class="row">
+  <!-- ---------- Balance adjustment ---------- -->
+  <div class="panel">
+    <h2>Adjust balance</h2>
+    <form method="post" action="/admin/users/<%= user.id %>/balance" data-confirm="Apply this balance adjustment?">
+      <div class="row3">
+        <div>
+          <label>Account</label>
+          <select name="field">
+            <% Object.keys(FIELDS).forEach(function(k){ %><option value="<%= k %>"><%= FIELDS[k] %></option><% }) %>
+          </select>
+        </div>
+        <div>
+          <label>Amount (negative to debit)</label>
+          <input name="amount" type="number" step="0.01" required placeholder="100 or -50" />
+        </div>
+      </div>
+      <label>Reason (goes on the audit trail)</label>
+      <input name="reason" required placeholder="e.g. Manual credit — approved deposit #12" />
+      <div style="margin-top:12px"><button class="btn sm" type="submit">Apply adjustment</button></div>
+    </form>
+  </div>
+
+  <!-- ---------- Loan ---------- -->
+  <div class="panel">
+    <h2>Loan / credit line</h2>
+    <form method="post" action="/admin/users/<%= user.id %>/loan-quota">
+      <label>Credit limit for this user (blank = use the global default)</label>
+      <input name="loan_quota" type="number" step="0.01" min="0" value="<%= user.loan_quota == null ? '' : user.loan_quota %>" placeholder="Global default applies" />
+      <div style="margin-top:12px"><button class="btn sm" type="submit">Save limit</button></div>
+    </form>
+    <hr style="border:none;border-top:1px solid var(--line);margin:16px 0" />
+    <form method="post" action="/admin/users/<%= user.id %>/settle-debt" data-confirm="Write off this much debt? The user's balance is not touched.">
+      <label>Write off debt — outstanding <b><%= owed %></b> USDT</label>
+      <input name="amount" type="number" step="0.01" min="0" max="<%= owed %>" <%= owed>0?'':'disabled' %> placeholder="Amount to write off" />
+      <div style="margin-top:12px"><button class="btn ghost sm" type="submit" <%= owed>0?'':'disabled' %>>Write off</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- ---------- Holdings ---------- -->
+<div class="panel">
+  <h2>Spot holdings</h2>
+  <% if (!holdings.length) { %>
+    <div class="empty">No coin holdings.</div>
+  <% } else { %>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Coin</th><th>Amount</th><th>Value (USDT)</th></tr></thead>
+        <tbody>
+          <% holdings.forEach(function(h){ %>
+            <tr><td><b><%= h.sym %></b></td><td class="mono"><%= h.amt %></td><td class="mono"><%= h.value.toLocaleString() %></td></tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
+
+<!-- ---------- Activity ---------- -->
+<div class="panel">
+  <h2>Transactions <span class="sub">· last 25</span></h2>
+  <% if (!logs.length) { %><div class="empty">No transactions.</div><% } else { %>
+    <div class="tw">
+      <table>
+        <thead><tr><th>When</th><th>Type</th><th>Amount</th><th>Balance after</th><th>Remark</th></tr></thead>
+        <tbody>
+          <% logs.forEach(function(l){ %>
+            <tr>
+              <td class="muted"><%= new Date(l.create_time*1000).toISOString().replace('T',' ').slice(0,19) %></td>
+              <td><span class="tag info"><%= l.type_text %></span></td>
+              <td class="mono <%= l.amount>=0?'pos':'neg' %>"><%= l.amount>=0?'+':'' %><%= l.amount %></td>
+              <td class="mono"><%= l.balance %></td>
+              <td class="wrap-cell muted"><%= l.remark %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
+
+<div class="row">
+  <div class="panel">
+    <h2>Contract positions <span class="sub">· last 10</span></h2>
+    <% if (!contracts.length) { %><div class="empty">None.</div><% } else { %>
+      <div class="tw"><table>
+        <thead><tr><th>Pair</th><th>Side</th><th>Size</th><th>PnL</th><th>Status</th></tr></thead>
+        <tbody><% contracts.forEach(function(o){ %>
+          <tr>
+            <td><%= o.pair_name %> <span class="muted"><%= o.lever %>X</span></td>
+            <td><span class="tag <%= o.entrust_type===1?'on':'off' %>"><%= o.entrust_type===1?'Long':'Short' %></span></td>
+            <td class="mono"><%= o.entrust_sheet %></td>
+            <td class="mono <%= o.profit>=0?'pos':'neg' %>"><%= o.profit %></td>
+            <td class="muted"><%= o.status_text %></td>
+          </tr>
+        <% }) %></tbody>
+      </table></div>
+    <% } %>
+  </div>
+
+  <div class="panel">
+    <h2>Staking <span class="sub">· last 10</span></h2>
+    <% if (!stakes.length) { %><div class="empty">None.</div><% } else { %>
+      <div class="tw"><table>
+        <thead><tr><th>Plan</th><th>Amount</th><th>Earned</th><th>Status</th></tr></thead>
+        <tbody><% stakes.forEach(function(s){ %>
+          <tr>
+            <td><%= s.names %> <span class="muted"><%= s.day_num %>d</span></td>
+            <td class="mono"><%= s.amount %></td>
+            <td class="mono pos"><%= s.profit %></td>
+            <td class="muted"><%= s.status_text %></td>
+          </tr>
+        <% }) %></tbody>
+      </table></div>
+    <% } %>
+  </div>
+</div>
+
+<div class="row">
+  <div class="panel">
+    <h2>Deposits <span class="sub">· last 10</span></h2>
+    <% if (!deposits.length) { %><div class="empty">None.</div><% } else { %>
+      <div class="tw"><table>
+        <thead><tr><th>Order</th><th>Amount</th><th>Status</th></tr></thead>
+        <tbody><% deposits.forEach(function(d){ %>
+          <tr>
+            <td class="mono"><%= d.order_no %><div class="muted" style="font-size:11px"><%= d.channel || d.coin_name %></div></td>
+            <td class="mono"><%= d.amount %></td>
+            <td><span class="tag <%= d.status===1?'on':(d.status===2?'off':'warn') %>"><%= ['Pending','Approved','Rejected'][d.status] %></span></td>
+          </tr>
+        <% }) %></tbody>
+      </table></div>
+    <% } %>
+  </div>
+
+  <div class="panel">
+    <h2>Withdrawals <span class="sub">· last 10</span></h2>
+    <% if (!withdrawals.length) { %><div class="empty">None.</div><% } else { %>
+      <div class="tw"><table>
+        <thead><tr><th>Order</th><th>Amount</th><th>Status</th></tr></thead>
+        <tbody><% withdrawals.forEach(function(w){ %>
+          <tr>
+            <td class="mono"><%= w.order_no %><div class="muted" style="font-size:11px"><%= w.coin_type || w.coin_name %></div></td>
+            <td class="mono"><%= w.amount %></td>
+            <td><span class="tag <%= w.status===1?'on':(w.status===2?'off':'warn') %>"><%= ['Pending','Approved','Rejected'][w.status] %></span></td>
+          </tr>
+        <% }) %></tbody>
+      </table></div>
+    <% } %>
+  </div>
+</div>
+
+<%- include('partials/foot') %>

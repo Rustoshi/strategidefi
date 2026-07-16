@@ -1,0 +1,60 @@
+<%- include('partials/head') %>
+
+<% if (flash) { %><div class="flash ok"><%= flash %></div><% } %>
+
+<div class="panel">
+  <h2>Withdrawal password <span class="sub">· global</span></h2>
+  <div class="note">
+    Users must enter this to withdraw. A per-user password set on a
+    <a href="/admin/users">user's page</a> overrides this one. If neither is set, withdrawals are refused.
+  </div>
+  <form method="post" action="/admin/settings/withdraw/password">
+    <label>Global withdrawal password</label>
+    <input name="password" type="text" value="<%= password || '' %>" placeholder="Not set — withdrawals are blocked" />
+    <div style="margin-top:12px"><button class="btn" type="submit">Save password</button></div>
+  </form>
+</div>
+
+<div class="panel">
+  <h2>Channels &amp; limits</h2>
+  <form method="post" action="/admin/settings/withdraw">
+    <label>Withdrawal fee rate (0.01 = 1%)</label>
+    <input name="rate" type="number" step="any" value="<%= rate || 0 %>" style="max-width:220px" />
+
+    <div class="tw" style="margin-top:16px">
+      <table>
+        <thead><tr><th style="min-width:140px">Label</th><th style="min-width:90px">Coin</th><th style="min-width:120px">Min withdrawal</th><th style="min-width:280px">Remark</th><th></th></tr></thead>
+        <tbody id="rows">
+          <% currencies.forEach(function(c){ %>
+            <tr>
+              <td><input name="coin_type[]" value="<%= c.coin_type || '' %>" placeholder="USDT(ERC20)" /></td>
+              <td><input name="coin_name[]" value="<%= c.coin_name || '' %>" placeholder="USDT" /></td>
+              <td><input name="min_withdraw[]" type="number" step="any" value="<%= c.min_withdraw || 0 %>" /></td>
+              <td><input name="recharge_remark[]" value="<%= c.recharge_remark || '' %>" /></td>
+              <td><button class="btn ghost sm" type="button" onclick="this.closest('tr').remove()">✕</button></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <div class="actions" style="margin-top:14px">
+      <button class="btn ghost sm" type="button" id="addRow">+ Add channel</button>
+      <button class="btn" type="submit">Save channels</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  document.getElementById('addRow').addEventListener('click', function () {
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td><input name="coin_type[]" placeholder="USDT(ERC20)" /></td>' +
+      '<td><input name="coin_name[]" placeholder="USDT" /></td>' +
+      '<td><input name="min_withdraw[]" type="number" step="any" value="50" /></td>' +
+      '<td><input name="recharge_remark[]" /></td>' +
+      '<td><button class="btn ghost sm" type="button">✕</button></td>';
+    tr.querySelector('button').addEventListener('click', function () { tr.remove(); });
+    document.getElementById('rows').appendChild(tr);
+  });
+</script>
+
+<%- include('partials/foot') %>
