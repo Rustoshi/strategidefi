@@ -1,0 +1,50 @@
+<%- include('partials/head') %>
+<div class="topbar"><h1>Notices</h1></div>
+
+<div class="panel">
+  <h2>Add / edit notice</h2>
+  <form action="/admin/notices" method="post">
+    <input type="hidden" name="id" id="n-id" />
+    <div class="row">
+      <div><label>Title</label><input name="titles" id="n-title" required /></div>
+      <div><label>Status</label>
+        <select name="status" id="n-status"><option value="0">Active</option><option value="1">Archived</option></select>
+      </div>
+    </div>
+    <label>Content</label><textarea name="contents" id="n-content"></textarea>
+    <div style="margin-top:14px;"><button class="btn" type="submit">Save notice</button>
+      <button class="btn ghost" type="button" onclick="resetForm()">Clear</button></div>
+  </form>
+</div>
+
+<table>
+  <thead><tr><th>ID</th><th>Title</th><th>Content</th><th></th></tr></thead>
+  <tbody>
+    <% notices.forEach(function(n){ %>
+      <tr>
+        <td><%= n.id %></td>
+        <td><%= n.titles %></td>
+        <td class="muted"><%= (n.contents||'').slice(0,120) %><%= (n.contents||'').length>120?'…':'' %></td>
+        <td>
+          <button class="btn ghost sm" type="button"
+            onclick='editNotice(<%- JSON.stringify({id:n.id,titles:n.titles,contents:n.contents,status:n.status}) %>)'>Edit</button>
+          <form class="inline" action="/admin/notices/<%= n.id %>/delete" method="post" onsubmit="return confirm('Delete this notice?')">
+            <button class="btn danger sm" type="submit">Delete</button>
+          </form>
+        </td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>
+
+<script>
+  function editNotice(n){
+    document.getElementById('n-id').value=n.id;
+    document.getElementById('n-title').value=n.titles||'';
+    document.getElementById('n-content').value=n.contents||'';
+    document.getElementById('n-status').value=n.status;
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  function resetForm(){ document.querySelector('form').reset(); document.getElementById('n-id').value=''; }
+</script>
+<%- include('partials/foot') %>

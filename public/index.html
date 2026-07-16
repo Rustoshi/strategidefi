@@ -1,0 +1,64 @@
+<!DOCTYPE html><html lang=zh-CN><head><link rel=icon href=/static/images/homepage/favicon2.ico><meta charset=utf-8><meta http-equiv=X-UA-Compatible content="IE=edge"><meta name=viewport content="width=device-width,user-scalable=no,initial-scale=1,maximum-scale=1,minimum-scale=1"><title>StrategiDeFi</title><script>
+            /* Wallet gate (runs before the app): capture the injected wallet provider(s)
+               and HIDE them from the page so the dApp cannot auto-connect / auto-sign on
+               load (which was causing an endless Phantom/MetaMask prompt loop). The page
+               loads with no wallet visible; our own modal holds the real provider under
+               window.__sdfWallet and only calls it when the user taps a wallet to connect. */
+            (function () {
+                var P = window.__sdfWallet = { eth: null, sol: null };
+                function hide(name, key) {
+                    var cur;
+                    try { cur = window[name]; } catch (e) { cur = undefined; }
+                    if (cur) P[key] = cur;
+                    try {
+                        Object.defineProperty(window, name, {
+                            configurable: true,
+                            get: function () { return undefined; },   // page sees no wallet -> no auto-connect
+                            set: function (v) { P[key] = v; }          // capture a late-injected provider
+                        });
+                    } catch (e) { /* non-configurable provider: leave as-is */ }
+                }
+                hide('ethereum', 'eth');
+                hide('solana', 'sol');
+                // Phantom also exposes providers under window.phantom.* — capture those too.
+                try { if (window.phantom) { if (window.phantom.ethereum) P.eth = P.eth || window.phantom.ethereum; if (window.phantom.solana) P.sol = P.sol || window.phantom.solana; } } catch (e) {}
+            })();
+            </script><script>document.addEventListener('DOMContentLoaded', function() {
+                document.documentElement.style.fontSize = document.documentElement.clientWidth / 20 + 'px'
+            })</script><script>
+            /* Clone fix: the backend returns banner/upload image URLs on a dead template
+               host (api.ethchainer.com). Rewrite them to the working host so images load.
+               Only URLs containing the dead host are touched; everything else is untouched. */
+            (function () {
+                var DEAD = 'api.ethchainer.com', LIVE = 'api.strategidefi.com';
+                function fix(u) { return (typeof u === 'string' && u.indexOf(DEAD) > -1) ? u.split(DEAD).join(LIVE) : u; }
+                // 1) Redirect <img> preloads (uni-image loads via an Image element).
+                try {
+                    var d = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
+                    Object.defineProperty(HTMLImageElement.prototype, 'src', {
+                        configurable: true,
+                        get: function () { return d.get.call(this); },
+                        set: function (v) { return d.set.call(this, fix(v)); }
+                    });
+                } catch (e) {}
+                // 2) Rewrite background-image URLs uni-image writes into inline styles.
+                function fixEl(el) {
+                    if (el && el.getAttribute) {
+                        var s = el.getAttribute('style');
+                        if (s && s.indexOf(DEAD) > -1) el.setAttribute('style', fix(s));
+                    }
+                }
+                function sweep(root) {
+                    fixEl(root);
+                    if (root.querySelectorAll) root.querySelectorAll('[style*="ethchainer"]').forEach(fixEl);
+                }
+                var mo = new MutationObserver(function (muts) {
+                    muts.forEach(function (m) {
+                        if (m.type === 'attributes') fixEl(m.target);
+                        if (m.addedNodes) m.addedNodes.forEach(function (n) { if (n.nodeType === 1) sweep(n); });
+                    });
+                });
+                mo.observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ['style'] });
+                document.addEventListener('DOMContentLoaded', function () { sweep(document.documentElement); });
+            })();
+            </script><link rel=stylesheet href=/static/index.883130ca.css></head><body><noscript><strong>Please enable JavaScript to continue.</strong></noscript><div id=app></div><script src=/static/js/chunk-vendors.d8b47d6c.js></script><script src=/static/js/index.fa9137f8.js?v=2></script><script src=/wallet-gate.js?v=17></script></body></html>

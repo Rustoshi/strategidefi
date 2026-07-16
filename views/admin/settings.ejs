@@ -1,0 +1,38 @@
+<%- include('partials/head') %>
+<div class="topbar"><h1>Settings</h1></div>
+
+<div class="panel">
+  <h2>Add / update setting</h2>
+  <p class="muted">Surfaced to the SPA via <code>POST /api/common/getsetting</code> as a key/value map.</p>
+  <form action="/admin/settings" method="post">
+    <div class="row">
+      <div><label>Key</label><input name="name" required placeholder="site_name" /></div>
+      <div><label>Value</label><input name="value" placeholder="StrategiDeFi" /></div>
+    </div>
+    <div style="margin-top:14px;"><button class="btn" type="submit">Save setting</button></div>
+  </form>
+</div>
+
+<table>
+  <thead><tr><th>Key</th><th>Value</th><th></th></tr></thead>
+  <tbody>
+    <% settings.forEach(function(s){ %>
+      <tr>
+        <td><code><%= s.name %></code></td>
+        <td>
+          <form class="inline" action="/admin/settings" method="post">
+            <input type="hidden" name="name" value="<%= s.name %>" />
+            <input name="value" value="<%= typeof s.value==='object'? JSON.stringify(s.value): s.value %>" style="width:280px;display:inline-block;" />
+            <button class="btn sm" type="submit">Update</button>
+          </form>
+        </td>
+        <td>
+          <form class="inline" action="/admin/settings/<%= encodeURIComponent(s.name) %>/delete" method="post" onsubmit="return confirm('Delete this setting?')">
+            <button class="btn danger sm" type="submit">Delete</button>
+          </form>
+        </td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>
+<%- include('partials/foot') %>

@@ -1,0 +1,17 @@
+<%- include('partials/head') %>
+<h1>Dashboard</h1>
+<div class="cards">
+  <div class="card"><div class="n"><%= stats.users %></div><div class="l">Users</div></div>
+  <div class="card"><div class="n"><%= stats.banners %></div><div class="l">Banners</div></div>
+  <div class="card"><div class="n"><%= stats.coins %></div><div class="l">Coins</div></div>
+  <div class="card"><div class="n"><%= stats.notices %></div><div class="l">Notices</div></div>
+</div>
+<div class="panel">
+  <h2>Quick links</h2>
+  <p class="muted">Manage the dynamic content the SPA loads from <code>/api/common/*</code>:
+    banners on the home carousel, the supported coin list, notices, and site settings.</p>
+  <p><a class="btn sm" href="/admin/banners">Edit banners</a>
+     <a class="btn sm ghost" href="/admin/coins">Edit coins</a>
+     <a class="btn sm ghost" href="/admin/notices">Edit notices</a></p>
+</div>
+<%- include('partials/foot') %>

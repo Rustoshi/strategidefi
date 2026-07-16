@@ -1,0 +1,21 @@
+<%- include('partials/head') %>
+<div class="topbar"><h1>Users</h1></div>
+<table>
+  <thead><tr><th>ID</th><th>Email</th><th>Nickname</th><th>Invite</th><th>USD</th><th>KYC</th><th>Admin</th><th>Created</th></tr></thead>
+  <tbody>
+    <% users.forEach(function(u){ %>
+      <tr>
+        <td><%= u.id %></td>
+        <td><%= u.email %></td>
+        <td><%= u.nickname || '—' %></td>
+        <td class="muted"><%= u.invite_code || '—' %></td>
+        <td><%= (u.USD || 0).toFixed ? u.USD.toFixed(2) : u.USD %></td>
+        <td><span class="tag <%= u.auth_status===2?'on':'off' %>"><%= ['none','pending','verified'][u.auth_status]||'none' %></span></td>
+        <td><%= u.is_admin ? '✓' : '' %></td>
+        <td class="muted"><%= u.createdAt ? u.createdAt.toISOString().slice(0,10) : '' %></td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>
+<% if (!users.length) { %><p class="muted" style="margin-top:16px;">No users yet.</p><% } %>
+<%- include('partials/foot') %>

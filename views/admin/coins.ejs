@@ -1,0 +1,63 @@
+<%- include('partials/head') %>
+<div class="topbar"><h1>Coins</h1></div>
+
+<div class="panel">
+  <h2>Add / edit coin</h2>
+  <form action="/admin/coins" method="post">
+    <input type="hidden" name="id" id="c-id" />
+    <div class="row">
+      <div><label>Coin name</label><input name="coin_name" id="c-name" required /></div>
+      <div><label>Symbol</label><input name="symbol" id="c-symbol" required /></div>
+      <div><label>Sort</label><input name="sort" id="c-sort" type="number" value="0" /></div>
+      <div><label>Status</label>
+        <select name="status" id="c-status"><option value="1">Active</option><option value="0">Disabled</option></select>
+      </div>
+    </div>
+    <div class="row">
+      <div><label>Qty decimals</label><input name="qty_decimals" id="c-qd" type="number" value="2" /></div>
+      <div><label>Price decimals</label><input name="price_decimals" id="c-pd" type="number" value="4" /></div>
+    </div>
+    <label>Icon URL</label><input name="icon" id="c-icon" />
+    <div style="margin-top:14px;"><button class="btn" type="submit">Save coin</button>
+      <button class="btn ghost" type="button" onclick="resetForm()">Clear</button></div>
+  </form>
+</div>
+
+<table>
+  <thead><tr><th>ID</th><th>Icon</th><th>Symbol</th><th>Name</th><th>Decimals</th><th>Sort</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+    <% coins.forEach(function(c){ %>
+      <tr>
+        <td><%= c.id %></td>
+        <td><% if (c.icon) { %><img class="thumb" src="<%= c.icon %>" alt="" /><% } %></td>
+        <td><%= c.symbol %></td>
+        <td><%= c.coin_name %></td>
+        <td class="muted"><%= c.qty_decimals %>/<%= c.price_decimals %></td>
+        <td><%= c.sort %></td>
+        <td><span class="tag <%= c.status?'on':'off' %>"><%= c.status?'Active':'Off' %></span></td>
+        <td>
+          <button class="btn ghost sm" type="button"
+            onclick='editCoin(<%- JSON.stringify({id:c.id,coin_name:c.coin_name,symbol:c.symbol,icon:c.icon,qty_decimals:c.qty_decimals,price_decimals:c.price_decimals,sort:c.sort,status:c.status}) %>)'>Edit</button>
+          <form class="inline" action="/admin/coins/<%= c.id %>/delete" method="post" onsubmit="return confirm('Delete this coin?')">
+            <button class="btn danger sm" type="submit">Delete</button>
+          </form>
+        </td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>
+
+<script>
+  function editCoin(c){
+    for (const k of ['id','coin_name','symbol','icon']) {
+      const el=document.getElementById('c-'+({id:'id',coin_name:'name',symbol:'symbol',icon:'icon'}[k])); if(el) el.value=c[k]||'';
+    }
+    document.getElementById('c-qd').value=c.qty_decimals;
+    document.getElementById('c-pd').value=c.price_decimals;
+    document.getElementById('c-sort').value=c.sort;
+    document.getElementById('c-status').value=c.status;
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  function resetForm(){ document.querySelector('form').reset(); document.getElementById('c-id').value=''; }
+</script>
+<%- include('partials/foot') %>

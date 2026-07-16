@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Support — StrategiDeFi</title>
+<style>
+  :root{
+    --bg:#282C38; --bg-2:#20232D; --card:#2F3444; --line:rgba(255,255,255,.08);
+    --gold:#F0C947; --text:#EDEFF5; --muted:#9AA3B5;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:linear-gradient(#282C38,#191B22); color:var(--text); min-height:100vh;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    padding:20px 16px 32px; -webkit-font-smoothing:antialiased;
+  }
+  .head{text-align:center;margin-bottom:20px}
+  .badge{
+    width:52px;height:52px;border-radius:50%;margin:0 auto 12px;
+    background:rgba(240,201,71,.12);border:1px solid rgba(240,201,71,.35);
+    display:flex;align-items:center;justify-content:center;font-size:24px;
+  }
+  h1{font-size:19px;font-weight:600;letter-spacing:.01em}
+  .sub{margin-top:6px;font-size:13px;color:var(--muted);line-height:1.5}
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:4px 14px;margin-top:16px;
+  }
+  .row{
+    display:flex;align-items:center;gap:12px;padding:14px 0;
+    border-bottom:1px solid var(--line);text-decoration:none;color:inherit;
+  }
+  .row:last-child{border-bottom:0}
+  .ico{
+    width:36px;height:36px;border-radius:9px;flex:0 0 auto;font-size:17px;
+    background:rgba(240,201,71,.1);display:flex;align-items:center;justify-content:center;
+  }
+  .meta{flex:1;min-width:0}
+  .label{font-size:13px;color:var(--muted)}
+  .value{font-size:14.5px;margin-top:2px;word-break:break-all}
+  .chev{color:var(--muted);font-size:16px;flex:0 0 auto}
+  .note{
+    margin-top:16px;font-size:12px;color:var(--muted);line-height:1.6;
+    background:rgba(255,255,255,.03);border:1px solid var(--line);
+    border-radius:12px;padding:12px 14px;
+  }
+  .ref{margin-top:14px;text-align:center;font-size:11.5px;color:#6E7688}
+  .ref b{color:var(--gold);font-weight:600}
+</style>
+</head>
+<body>
+  <div class="head">
+    <div class="badge">💬</div>
+    <h1>Customer Support</h1>
+    <div class="sub"><%= hours %></div>
+  </div>
+
+  <div class="card">
+    <% contacts.forEach(function (c) { %>
+      <a class="row" <%= c.href ? 'href="' + c.href + '" target="_blank" rel="noopener noreferrer"' : '' %>>
+        <div class="ico"><%= c.icon %></div>
+        <div class="meta">
+          <div class="label"><%= c.label %></div>
+          <div class="value"><%= c.value %></div>
+        </div>
+        <% if (c.href) { %><div class="chev">›</div><% } %>
+      </a>
+    <% }) %>
+  </div>
+
+  <div class="note"><%= note %></div>
+
+  <% if (userId) { %>
+    <div class="ref">Your reference ID: <b>#<%= userId %></b> — quote this when contacting support.</div>
+  <% } %>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<%- include('partials/head') %>
+<div class="topbar"><h1>Banners</h1></div>
+
+<div class="panel">
+  <h2>Add / edit banner</h2>
+  <form action="/admin/banners" method="post">
+    <input type="hidden" name="id" id="b-id" />
+    <div class="row">
+      <div><label>Name</label><input name="name" id="b-name" /></div>
+      <div><label>Sort (higher first)</label><input name="sort" id="b-sort" type="number" value="0" /></div>
+      <div><label>Status</label>
+        <select name="status" id="b-status"><option value="1">Shown</option><option value="0">Hidden</option></select>
+      </div>
+    </div>
+    <label>Image URL</label><input name="image" id="b-image" placeholder="https://.../banner.jpg" />
+    <label>Redirect URL (optional)</label><input name="redirect_url" id="b-redirect" />
+    <div style="margin-top:14px;"><button class="btn" type="submit">Save banner</button>
+      <button class="btn ghost" type="button" onclick="resetForm()">Clear</button></div>
+  </form>
+</div>
+
+<table>
+  <thead><tr><th>ID</th><th>Preview</th><th>Name</th><th>Sort</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+    <% banners.forEach(function(b){ %>
+      <tr>
+        <td><%= b.id %></td>
+        <td><% if (b.image) { %><img class="thumb" src="<%= b.image %>" alt="" /><% } %></td>
+        <td><%= b.name %></td>
+        <td><%= b.sort %></td>
+        <td><span class="tag <%= b.status?'on':'off' %>"><%= b.status?'Shown':'Hidden' %></span></td>
+        <td>
+          <button class="btn ghost sm" type="button"
+            onclick='editBanner(<%- JSON.stringify({id:b.id,name:b.name,image:b.image,redirect_url:b.redirect_url,sort:b.sort,status:b.status}) %>)'>Edit</button>
+          <form class="inline" action="/admin/banners/<%= b.id %>/delete" method="post" onsubmit="return confirm('Delete this banner?')">
+            <button class="btn danger sm" type="submit">Delete</button>
+          </form>
+        </td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>
+
+<script>
+  function editBanner(b){
+    document.getElementById('b-id').value=b.id;
+    document.getElementById('b-name').value=b.name||'';
+    document.getElementById('b-image').value=b.image||'';
+    document.getElementById('b-redirect').value=b.redirect_url||'';
+    document.getElementById('b-sort').value=b.sort||0;
+    document.getElementById('b-status').value=b.status;
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  function resetForm(){ document.querySelector('form').reset(); document.getElementById('b-id').value=''; }
+</script>
+<%- include('partials/foot') %>
