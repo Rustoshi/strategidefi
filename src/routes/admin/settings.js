@@ -8,9 +8,19 @@ const Setting = require('../../models/Setting');
 
 const flash = (base, msg) => `${base}?msg=${encodeURIComponent(msg)}`;
 
-// Rebuild an array-of-objects from parallel form fields (name="addr[]" etc.).
+// Rebuild an array-of-objects from parallel form fields (name="coin_type[]" etc.).
+//
+// app.js uses express.urlencoded({extended:true}), i.e. `qs`, which parses `coin_type[]=x`
+// into body.coin_type = ['x'] — NOT body['coin_type[]']. Reading the bracketed key returns
+// undefined, which silently saved an empty list. Read the plain key, keeping a bracketed
+// fallback in case the parser is ever switched to extended:false.
 function rows(body, keys) {
-  const arr = (k) => { const v = body[k + '[]']; return v === undefined ? [] : (Array.isArray(v) ? v : [v]); };
+  const arr = (k) => {
+    let v = body[k];
+    if (v === undefined) v = body[k + '[]'];
+    if (v === undefined || v === null) return [];
+    return Array.isArray(v) ? v : [v];
+  };
   const first = arr(keys[0]);
   return first.map((_, i) => {
     const o = {};

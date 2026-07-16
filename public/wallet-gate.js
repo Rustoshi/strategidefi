@@ -209,6 +209,13 @@
         if (prev && /verification/i.test(prev.textContent || '')) prev.style.display = 'none';
       }
     }
+
+    // The signup form ships two tabs: account registration (the first, currentTab=2) and
+    // email registration (the second, currentTab=1 — the default). Only email signup exists
+    // in the API, and the English locale renders the account tab's label as "EmailRegister",
+    // so it reads as a confusing duplicate of "Email Registration". Hide the first tab.
+    var tabs = document.querySelectorAll('.form_tab .tab_item');
+    if (tabs.length > 1 && tabs[0].style.display !== 'none') tabs[0].style.display = 'none';
   }
   var enhTimer = null;
   var mo2 = new MutationObserver(function () {
