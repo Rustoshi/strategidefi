@@ -2,9 +2,12 @@ const { mongoose } = require('../db');
 
 // A user's simulated (paper) balances. Three sub-accounts mirror the app's Assets page:
 // Funds (spot), Contract (derivatives margin), and Fiat. All amounts are in USDT.
-// Spot holdings are tracked per coin symbol under `holdings`. No real funds are ever
-// involved — deposit/withdraw are inert stubs; the starting balance is credited on signup.
-const STARTING_FUNDS = Number(process.env.DEMO_START_USDT || 10000);
+// Spot holdings are tracked per coin symbol under `holdings`. No real funds are ever involved.
+//
+// New accounts start EMPTY. Balance only ever arrives through a traceable route: an admin
+// approving a deposit, an admin adjustment, or a loan drawdown — each of which writes a
+// CreditLog entry. Set DEMO_START_USDT to hand new signups a starting balance instead.
+const STARTING_FUNDS = Number(process.env.DEMO_START_USDT || 0);
 
 const accountSchema = new mongoose.Schema(
   {
