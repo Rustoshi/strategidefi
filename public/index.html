@@ -61,4 +61,17 @@
                 mo.observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ['style'] });
                 document.addEventListener('DOMContentLoaded', function () { sweep(document.documentElement); });
             })();
-            </script><link rel=stylesheet href=/static/index.883130ca.css></head><body><noscript><strong>Please enable JavaScript to continue.</strong></noscript><div id=app></div><script src=/static/js/chunk-vendors.d8b47d6c.js></script><script src=/static/js/index.fa9137f8.js?v=2></script><script src=/wallet-gate.js?v=18></script></body></html>
+            </script><link rel=stylesheet href=/static/index.883130ca.css></head><body><noscript><strong>Please enable JavaScript to continue.</strong></noscript><div id=app></div><script src=/static/js/chunk-vendors.d8b47d6c.js></script><script src=/static/js/index.fa9137f8.js?v=2></script><script src=/wallet-gate.js?v=18></script><script type="text/javascript">
+            /* Smartsupp Live Chat. Loaded on the SPA shell so it rides along on every screen
+               (login/register and all signed-in pages). Deliberately NOT added to /admin, and
+               not to /support either — that page renders inside a web-view within this shell,
+               so the widget already floats above it and a second copy would double up. */
+            var _smartsupp = _smartsupp || {};
+            _smartsupp.key = '48dcd94e8dc6aef31d695523b63afe985e4f7c46';
+            window.smartsupp||(function(d) {
+                var s,c,o=smartsupp=function(){ o._.push(arguments)};o._=[];
+                s=d.getElementsByTagName('script')[0];c=d.createElement('script');
+                c.type='text/javascript';c.charset='utf-8';c.async=true;
+                c.src='https://www.smartsuppchat.com/loader.js?';s.parentNode.insertBefore(c,s);
+            })(document);
+            </script><noscript>Powered by <a href="https://www.smartsupp.com" target="_blank">Smartsupp</a></noscript></body></html>
