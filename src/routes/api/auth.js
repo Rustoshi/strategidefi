@@ -11,10 +11,23 @@ function makeInviteCode() {
   return Math.random().toString(36).slice(2, 8).toUpperCase();
 }
 
+// The dashboard header renders `userInfo.USD` as its "Balance". `User.USD` is a stale DB
+// column that nothing maintains (always 0), so fill it from the live Funds Account balance —
+// that's the number the dashboard is meant to show.
+// (The Assets page uses /api/credit/usercredit, which sets USD to the full Total Asset
+// Equivalent instead — different screen, different meaning.)
+async function withFunds(user) {
+  const info = user.toApi();
+  const acc = await Account.forUser(user.id);
+  info.USD = Number((acc.funds || 0).toFixed(2));
+  info.usbalance = info.USD;
+  return info;
+}
+
 // Auth success payload. Includes both `userinfo` and `userInfo` because the SPA's
 // cache layer reads one casing and other screens read the other.
-function authPayload(user) {
-  const info = user.toApi();
+async function authPayload(user) {
+  const info = await withFunds(user);
   return { token: sign(user), userinfo: info, userInfo: info };
 }
 
@@ -43,7 +56,7 @@ router.post('/register', async (req, res) => {
     await user.save();
     await Account.forUser(user.id); // credit the starting (paper) balance
 
-    return ok(res, authPayload(user));
+    return ok(res, await authPayload(user));
   } catch (e) {
     return fail(res, 500, e.message);
   }
@@ -62,7 +75,7 @@ router.post('/login', async (req, res) => {
     user.last_login_at = new Date();
     await user.save();
 
-    return ok(res, authPayload(user));
+    return ok(res, await authPayload(user));
   } catch (e) {
     return fail(res, 500, e.message);
   }
@@ -79,7 +92,7 @@ router.post('/loginvirtual', async (req, res) => {
       await user.setPassword(Math.random().toString(36));
       await user.save();
     }
-    return ok(res, authPayload(user));
+    return ok(res, await authPayload(user));
   } catch (e) {
     return fail(res, 500, e.message);
   }
@@ -103,7 +116,7 @@ router.post('/walletsignlogin', async (req, res) => {
       await user.setPassword(Math.random().toString(36));
       await user.save();
     }
-    return ok(res, authPayload(user));
+    return ok(res, await authPayload(user));
   } catch (e) {
     return fail(res, 500, e.message);
   }
@@ -113,7 +126,9 @@ router.post('/walletsignlogin', async (req, res) => {
 // Matches the live contract: 200 with empty userinfo when anonymous (so the SPA stays
 // on the public home page instead of treating it as an expired session and redirecting).
 router.post('/userinfo', optionalAuth, async (req, res) => {
-  const info = req.user ? req.user.toApi() : [];
+  // The dashboard calls this and renders userinfo.USD as its "Balance" — so it must carry
+  // the live Funds Account balance, not User.USD (which nothing maintains).
+  const info = req.user ? await withFunds(req.user) : [];
   return ok(res, { userinfo: info, userInfo: info });
 });
 
